@@ -1,12 +1,14 @@
 import os
 
+import pypandoc
 from PyQt6 import QtWidgets
-from PyQt6.QtWidgets import QMessageBox
+from PyQt6.QtWidgets import QMessageBox, QFileDialog
 from loguru import logger
 
 from frame_field import FrameField
 from ui.ui_document_templater import Ui_MainWindow
 from python_docx_replace import docx_replace, docx_get_keys
+from docx import Document
 
 from utils import *
 
@@ -23,9 +25,10 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         self.result_path: str = self.current_dir + '/result/'
         self.frame_list: list = []
         self.param_list: list = []
-        self.listWidget_template.doubleClicked.connect(self.__create_redaction_template_input_field)
+        self.listWidget_template.doubleClicked.connect(self.__choose_template)
         self.listWidget_template.fileReceived.connect(self.__load_docx)
         self.pushButton_redaction_template_save.clicked.connect(self.__save_result_docs)
+        self.pushButton_open.clicked.connect(self.__open_file)
         self.__update_template_listwidget()
 
         if not os.path.exists('./templates'):
@@ -34,12 +37,22 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             os.mkdir('./result')
 
     @logger.catch
+    def __open_file(self, event):
+        file_path, _ = QFileDialog.getOpenFileName(None, "Open File", "", "Word Files (*.docx)")
+        self.__load_docx(file_path)
+
+    @logger.catch
     def __load_docx(self, path: str):
         try:
             if path.endswith('.docx'):
                 if not os.path.exists(self.template_path+os.path.basename(path)):
                     document = Document(path)
-                    document.save(self.template_path+os.path.basename(path))
+                    keys = docx_get_keys(document)
+                    if keys:
+                        document.save(self.template_path+os.path.basename(path))
+                    else:
+                        error = QMessageBox(text="Не найдены строки шаблона\nПроверьте правильность заполнения шаблона")
+                        error.exec()
                 else:
                     error = QMessageBox(text="Шаблон с таким именем уже есть")
                     error.exec()
@@ -58,23 +71,41 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             self.listWidget_template.addItem(os.path.splitext(i)[0])
 
     @logger.catch
-    def __create_redaction_template_input_field(self, bul_val=False):
-        self.__delete_fields()
+    def __choose_template(self, bul_val=False):
         if os.path.exists(self.template_path+self.listWidget_template.currentItem().text()+'.docx'):
-            self.doc = Document(self.template_path+self.listWidget_template.currentItem().text()+'.docx')
-            keys = docx_get_keys(self.doc)
+            self.__delete_fields()
+            path = self.template_path+self.listWidget_template.currentItem().text()+'.docx'
+            self.doc = Document(path)
+            self.__convert_docx(path)
+            self.__create_redaction_template_input_field()
+        else:
+            error = QMessageBox(text="Не найдены файлы шаблона")
+            error.exec()
+
+    @logger.catch
+    def __convert_docx(self, path):
+        pypandoc.convert_file(path, 'html', outputfile='templates/temp.html')
+        self.__open_html()
+
+    @logger.catch
+    def __open_html(self):
+        with open('templates/temp.html', 'r', encoding='utf-8') as file:
+            self.widget_docs_view.setHtml(file.read())
+
+    @logger.catch
+    def __create_redaction_template_input_field(self):
+        keys = docx_get_keys(self.doc)
+        if keys:
             keys = sort_list(keys)
-            if not keys:
-                parse_docx(self.doc)
             self.save_file_name = self.listWidget_template.currentItem().text()
             for i in keys:
                 self.param_list.append(i)
                 frame = FrameField(self.scrollAreaWidgetContents)
                 frame.label.setText(i)
                 self.frame_list.append(frame)
-                self.verticalLayout_2.addWidget(frame.get_frame())
+                self.verticalLayout_9.addWidget(frame.get_frame())
         else:
-            error = QMessageBox(text="Не найдены файлы шаблона")
+            error = QMessageBox(text="Не найдены строки шаблона\nПроверьте правильность заполнения шаблона")
             error.exec()
 
     @logger.catch
