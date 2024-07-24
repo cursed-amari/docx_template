@@ -29,12 +29,13 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         self.listWidget_template.fileReceived.connect(self.__load_docx)
         self.pushButton_redaction_template_save.clicked.connect(self.__save_result_docs)
         self.pushButton_open.clicked.connect(self.__open_file)
-        self.__update_template_listwidget()
 
         if not os.path.exists('./templates'):
             os.mkdir('./templates')
         if not os.path.exists('./result'):
             os.mkdir('./result')
+
+        self.__update_template_listwidget()
 
     @logger.catch
     def __open_file(self, event):
@@ -84,8 +85,11 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
 
     @logger.catch
     def __convert_docx(self, path):
-        pypandoc.convert_file(path, 'html', outputfile='templates/temp.html')
-        self.__open_html()
+        try:
+            pypandoc.convert_file(path, 'html', outputfile='templates/temp.html')
+            self.__open_html()
+        except Exception as e:
+            self.label_info.setText(e)
 
     @logger.catch
     def __open_html(self):
