@@ -63,6 +63,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         if os.path.exists(self.template_path+self.listWidget_template.currentItem().text()+'.docx'):
             self.doc = Document(self.template_path+self.listWidget_template.currentItem().text()+'.docx')
             keys = docx_get_keys(self.doc)
+            keys = sort_list(keys)
             if not keys:
                 parse_docx(self.doc)
             self.save_file_name = self.listWidget_template.currentItem().text()
@@ -79,7 +80,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
     @logger.catch
     def __save_result_docs(self, bul_val=False):
         for i in self.frame_list:
-            eval(f"docx_replace(self.doc, {i.label.text()}='{i.lineEdit.text()}')")
+            docx_replace(self.doc, **{i.label.text(): i.lineEdit.text()})
         self.doc.save(os.getcwd()+'/result/'+self.save_file_name+'.docx')
         self.label_info.setText(f"Файл сохранён: ./result/{self.save_file_name}.docx")
 

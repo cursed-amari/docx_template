@@ -122,7 +122,7 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
-        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Document templater"))
         self.label_info.setText(_translate("MainWindow", ""))
         self.pushButton_redaction_template_save.setText(_translate("MainWindow", "Сохранить"))
 
