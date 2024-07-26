@@ -116,8 +116,12 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
     def __save_result_docs(self, bul_val=False):
         for i in self.frame_list:
             docx_replace(self.doc, **{i.label.text(): i.lineEdit.text()})
-        self.doc.save(os.getcwd()+'/result/'+self.save_file_name+'.docx')
-        self.label_info.setText(f"Файл сохранён: ./result/{self.save_file_name}.docx")
+        save_path = QFileDialog.getSaveFileName(None,
+                                                'Save file',
+                                                './result/'+self.save_file_name,
+                                                "Word Files (*.docx)")
+        self.doc.save(save_path[0])
+        self.label_info.setText(f"Файл сохранён: {save_path[0]}")
 
     @logger.catch
     def __delete_fields(self, bul_val=False):
