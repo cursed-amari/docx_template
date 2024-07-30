@@ -1,5 +1,3 @@
-import os
-
 import pypandoc
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QMessageBox, QFileDialog
@@ -25,15 +23,14 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         self.result_path: str = self.current_dir + '/result/'
         self.frame_list: list = []
         self.param_list: list = []
+        self.data: dict = {}
         self.listWidget_template.doubleClicked.connect(self.__choose_template)
         self.listWidget_template.fileReceived.connect(self.__load_docx)
         self.pushButton_redaction_template_save.clicked.connect(self.__save_result_docs)
         self.pushButton_open.clicked.connect(self.__open_file)
 
-        if not os.path.exists('./templates'):
-            os.mkdir('./templates')
-        if not os.path.exists('./result'):
-            os.mkdir('./result')
+        check_folders()
+        self.__get_data()
 
         self.__update_template_listwidget()
 
@@ -104,7 +101,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             self.save_file_name = self.listWidget_template.currentItem().text()
             for i in keys:
                 self.param_list.append(i)
-                frame = FrameField(self.scrollAreaWidgetContents)
+                frame = FrameField(self.scrollAreaWidgetContents, self.data)
                 frame.label.setText(i)
                 self.frame_list.append(frame)
                 self.verticalLayout_9.addWidget(frame.get_frame())
@@ -128,6 +125,10 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         for i in self.frame_list:
             i.get_frame().deleteLater()
         self.frame_list.clear()
+
+    @logger.catch
+    def __get_data(self):
+        self.data = get_data_dict()
 
 
 if __name__ == "__main__":
