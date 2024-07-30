@@ -104,7 +104,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
                 frame = FrameField(self.scrollAreaWidgetContents, self.data)
                 frame.label.setText(i)
                 self.frame_list.append(frame)
-                self.verticalLayout_9.addWidget(frame.get_frame())
+                self.verticalLayout_scrollAreaWidgetContents.addWidget(frame.get_frame())
         else:
             error = QMessageBox(text="Не найдены строки шаблона\nПроверьте правильность заполнения шаблона")
             error.exec()
