@@ -18,21 +18,23 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.doc: Document
         self.doc_path: str
-        self.current_dir: str = os.getcwd()
-        self.template_path: str = self.current_dir + '/templates/'
-        self.result_path: str = self.current_dir + '/result/'
+        self.template_path: str = os.getcwd() + '/templates/'
         self.frame_list: list = []
-        self.param_list: list = []
         self.data: dict = {}
-        self.listWidget_template.doubleClicked.connect(self.__choose_template)
-        self.listWidget_template.fileReceived.connect(self.__load_docx)
-        self.pushButton_redaction_template_save.clicked.connect(self.__save_result_docs)
-        self.pushButton_open.clicked.connect(self.__open_file)
+
+        self.__connection()
 
         check_folders()
         self.__get_data()
 
         self.__update_template_listwidget()
+
+    @logger.catch
+    def __connection(self):
+        self.listWidget_template.doubleClicked.connect(self.__choose_template)
+        self.listWidget_template.fileReceived.connect(self.__load_docx)
+        self.pushButton_redaction_template_save.clicked.connect(self.__save_result_docs)
+        self.pushButton_open.clicked.connect(self.__open_file)
 
     @logger.catch
     def __open_file(self, event):
@@ -69,7 +71,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             self.listWidget_template.addItem(os.path.splitext(i)[0])
 
     @logger.catch
-    def __choose_template(self, bul_val=False):
+    def __choose_template(self, event=False):
         if os.path.exists(self.template_path+self.listWidget_template.currentItem().text()+'.docx'):
             self.__delete_fields()
             path = self.template_path+self.listWidget_template.currentItem().text()+'.docx'
@@ -81,7 +83,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             error.exec()
 
     @logger.catch
-    def __convert_docx(self, path):
+    def __convert_docx(self, path: str):
         try:
             pypandoc.convert_file(path, 'html', outputfile='templates/temp.html')
             self.__open_html()
@@ -100,7 +102,6 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             keys = sort_list(keys)
             self.save_file_name = self.listWidget_template.currentItem().text()
             for i in keys:
-                self.param_list.append(i)
                 frame = FrameField(self.scrollAreaWidgetContents, self.data)
                 frame.label.setText(i)
                 self.frame_list.append(frame)
@@ -110,7 +111,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             error.exec()
 
     @logger.catch
-    def __save_result_docs(self, bul_val=False):
+    def __save_result_docs(self, event=False):
         for i in self.frame_list:
             docx_replace(self.doc, **{i.label.text(): i.lineEdit.text()})
         save_path = QFileDialog.getSaveFileName(None,
@@ -121,7 +122,7 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
         self.label_info.setText(f"Файл сохранён: {save_path[0]}")
 
     @logger.catch
-    def __delete_fields(self, bul_val=False):
+    def __delete_fields(self, event=False):
         for i in self.frame_list:
             i.get_frame().deleteLater()
         self.frame_list.clear()
