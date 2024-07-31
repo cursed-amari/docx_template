@@ -15,7 +15,12 @@ def check_folders():
         os.mkdir('./result')
 
 
-def sort_list(input_list):
+def sort_list(input_list: list) -> list:
+    """
+    Сортировка листа по первому числу\n
+    :param input_list:
+    :return: list
+    """
     has_numeric_prefix = any(re.match(r'^\d+', item) for item in input_list)
 
     if has_numeric_prefix:
@@ -25,9 +30,16 @@ def sort_list(input_list):
         return input_list
 
 
-def get_data_dict():
+def get_data_dict() -> dict:
+    """
+    Получить данные из data и преобразовать в dict  \n
+    key первый столбец  \n
+    value второй столбец  \n
+    Если key повторяется то value идёт в list к тому же key  \n
+    Если одна из строк в столбце пустая она будет записана как nan \n
+    :return: dict
+    """
     file_path = './templates/data.xlsx'
-    sheet_name = 'Sheet1'
 
     df = pd.read_excel(file_path)
 
@@ -38,8 +50,8 @@ def get_data_dict():
         value = row.iloc[1]
 
         if key in data_dict.keys():
-            data_dict[key].append(value)
+            data_dict[str(key)].append(str(value))
         else:
-            data_dict[key] = [value]
+            data_dict[str(key)] = [str(value)]
 
     return data_dict

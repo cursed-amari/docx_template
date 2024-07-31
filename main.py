@@ -1,12 +1,13 @@
-import pypandoc
 from PyQt6 import QtWidgets
 from PyQt6.QtWidgets import QMessageBox, QFileDialog
 from loguru import logger
+from python_docx_replace import docx_replace, docx_get_keys
+from docx import Document
+import pypandoc
 
 from frame_field import FrameField
 from ui.ui_document_templater import Ui_MainWindow
-from python_docx_replace import docx_replace, docx_get_keys
-from docx import Document
+
 
 from utils import *
 
@@ -44,22 +45,25 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
     @logger.catch
     def __load_docx(self, path: str):
         try:
-            if path.endswith('.docx'):
-                if not os.path.exists(self.template_path+os.path.basename(path)):
-                    document = Document(path)
-                    keys = docx_get_keys(document)
-                    if keys:
-                        document.save(self.template_path+os.path.basename(path))
+            if path:
+                if path.endswith('.docx'):
+                    if not os.path.exists(self.template_path+os.path.basename(path)):
+                        document = Document(path)
+                        keys = docx_get_keys(document)
+                        if keys:
+                            document.save(self.template_path+os.path.basename(path))
+                        else:
+                            error = QMessageBox(text="Не найдены строки шаблона\nПроверьте правильность заполнения шаблона")
+                            error.exec()
                     else:
-                        error = QMessageBox(text="Не найдены строки шаблона\nПроверьте правильность заполнения шаблона")
+                        error = QMessageBox(text="Шаблон с таким именем уже есть")
                         error.exec()
                 else:
-                    error = QMessageBox(text="Шаблон с таким именем уже есть")
+                    error = QMessageBox(text="Поддерживается только формат .docx")
                     error.exec()
+                self.__update_template_listwidget()
             else:
-                error = QMessageBox(text="Поддерживается только формат .docx")
-                error.exec()
-            self.__update_template_listwidget()
+                self.label_info.setText("Файл не выбран")
         except Exception as e:
             print(e)
 
@@ -78,6 +82,8 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
             self.doc = Document(path)
             self.__convert_docx(path)
             self.__create_redaction_template_input_field()
+
+            self.label_info.setText(f"Открыт шаблон {self.listWidget_template.currentItem().text()}")
         else:
             error = QMessageBox(text="Не найдены файлы шаблона")
             error.exec()
@@ -118,8 +124,11 @@ class DocumentTeplatter(QtWidgets.QMainWindow, Ui_MainWindow):
                                                 'Save file',
                                                 './result/'+self.save_file_name,
                                                 "Word Files (*.docx)")
-        self.doc.save(save_path[0])
-        self.label_info.setText(f"Файл сохранён: {save_path[0]}")
+        try:
+            self.doc.save(save_path[0])
+            self.label_info.setText(f"Файл сохранён: {save_path[0]}")
+        except FileNotFoundError:
+            self.label_info.setText("Не выбрано место сохранения")
 
     @logger.catch
     def __delete_fields(self, event=False):
